@@ -4,15 +4,24 @@ import os
 import sys
 
 
-table = [[' ', ' ', ' '],
-         [' ', ' ', ' '],
-         [' ', ' ', ' ']]
-
 player = 'X'
 
 
-def display():
-    row_delim = '+-+-+-+'
+def init_table(size):
+    table = []
+    row = []
+    for i in range(size):
+        row.append(' ')
+    for j in range(size):
+        table.append(row.copy())
+
+    return table
+
+
+def display(size):
+    row_delim = '+'
+    for i in range(size):
+        row_delim += '-+'
     print(row_delim)
     for row in table:
         print('|', end='')
@@ -23,12 +32,12 @@ def display():
         print(row_delim)
 
 
-def validate(x, y):
-    if x < 0 or x > 2:
+def validate(size, x, y):
+    if x < 0 or x > size - 1:
         print('Error: invalid row number')
         return False
 
-    if y < 0 or y > 2:
+    if y < 0 or y > size - 1:
         print('Error: invalid column number')
         return False
 
@@ -43,8 +52,8 @@ def flip_player():
         player = 'X'
 
 
-def turn(x, y):
-    if not validate(x, y):
+def turn(table, x, y):
+    if not validate(len(table), x, y):
         return False
 
     if table[x][y] != ' ':
@@ -57,57 +66,75 @@ def turn(x, y):
     return True
 
 
-def check(table, player):
-    for i in range(3):
+def check_hv(table, player):
+    size = len(table)
+    for i in range(size):
         flag = True
-        for j in range(3):
+        for j in range(size):
             flag &= table[i][j] == player
             if not flag:
                 break
         if flag:
-            return player
+            return True
 
-    flag = True
-    for j in range(3):
-        flag &= table[j][i] == player
-        if not flag:
-            break
-    if flag:
-        return player
+        flag = True
+        for j in range(size):
+            flag &= table[j][i] == player
+            if not flag:
+                break
+        if flag:
+            return True
 
+    return False
+
+
+def check_d(table, player):
+    size = len(table)
     flag = True
-    for i in range(3):
+    for i in range(size):
         flag &= table[i][i] == player
         if not flag:
             break
     if flag:
-        return player
+        return True
 
     flag = True
-    for i in range(3):
-        flag &= table[i][2 - i] == player
+    for i in range(size):
+        flag &= table[i][size - 1 - i] == player
         if not flag:
             break
     if flag:
+        return True
+
+    return False
+
+
+def check(table, player, turn_count):
+    if check_hv(table, player) or check_d(table, player):
         return player
 
-    # TODO: XO?
+    if turn_count == len(table)**2:
+        return 'XO'
 
     return 'cont'
 
 
 if __name__ == '__main__':
-    display()
+    size = int(input('size of table = '))
+    table = init_table(size)
+    display(size)
 
+    turn_count = 0
     state = 'cont'
     while state == 'cont':
         print(f'Player {player}:')
         x = int(input('row = '))
         y = int(input('col = '))
-        if turn(x - 1, y - 1):
-            state = check(table, player)
+        if turn(table, x - 1, y - 1):
+            turn_count += 1
+            state = check(table, player, turn_count)
             flip_player()
-        display()
+        display(size)
 
     if state == 'XO':
         print('Nobody win :(')
