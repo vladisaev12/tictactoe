@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
-import main
+from main import Game
 
 
 class TestXO(unittest.TestCase):
@@ -9,11 +9,11 @@ class TestXO(unittest.TestCase):
     def test_init_table(self):
         testdata = [1, 3, 42]
         for size in testdata:
-            table = main.init_table(size)
-            self.assertEqual(size, len(table))
+            game = Game(size)
+            self.assertEqual(size, len(game.table))
             for i in range(size):
-                self.assertEqual(size, len(table[i]))
-            for row in table:
+                self.assertEqual(size, len(game.table[i]))
+            for row in game.table:
                 for field in row:
                     self.assertEqual(' ', field)
 
@@ -51,8 +51,9 @@ class TestXO(unittest.TestCase):
               ['O', 'X', 'O']], 'O', 9, 'XO'),
         ]
         for table, player, turn_count, result in testdata:
+            game = Game(0)
             self.assertEqual(result,
-                             main.check(table, player, turn_count),
+                             game.check(table, player, turn_count),
                              msg=f'case: {table}, {player}')
 
 

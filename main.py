@@ -1,194 +1,190 @@
 #!/usr/bin/env python3
 
 import os
-import sys
+# import sys
 import tkinter as tk
 from tkinter import messagebox
 # import threading
 
 
-table = []
-player = 'X'
-turn_count = 0
-state = 'cont'
+# def display(size):
+#     row_delim = '+'
+#     for i in range(size):
+#         row_delim += '-+'
+#     print(row_delim)
+#     for row in table:
+#         print('|', end='')
+#         for field in row:
+#             print(field, end='|')
+#             sys.stdout.flush()
+#         print()
+#         print(row_delim)
 
 
-def init_table(size):
-    table = []
-    row = []
-    for i in range(size):
-        row.append(' ')
-    for j in range(size):
-        table.append(row.copy())
+class Game:
 
-    return table
+    def __init__(self, size):
+        self.table = self.init_table(size)
+        self.player = 'X'
+        self.turn_count = 0
+        self.state = 'cont'
 
-
-def display(size):
-    row_delim = '+'
-    for i in range(size):
-        row_delim += '-+'
-    print(row_delim)
-    for row in table:
-        print('|', end='')
-        for field in row:
-            print(field, end='|')
-            sys.stdout.flush()
-        print()
-        print(row_delim)
-
-
-def validate(size, x, y):
-    if x < 0 or x > size - 1:
-        print('Error: invalid row number')
-        return False
-
-    if y < 0 or y > size - 1:
-        print('Error: invalid column number')
-        return False
-
-    return True
-
-
-def flip_player():
-    global player
-    if player == 'X':
-        player = 'O'
-    else:
-        player = 'X'
-
-
-def turn(table, x, y):
-    if not validate(len(table), x, y):
-        return False
-
-    if table[x][y] != ' ':
-        print('Error: field is not empty')
-        return False
-
-    global player
-    table[x][y] = player
-
-    return True
-
-
-def check_hv(table, player):
-    size = len(table)
-    for i in range(size):
-        flag = True
+    def init_table(self, size):
+        table = []
+        row = []
+        for i in range(size):
+            row.append(' ')
         for j in range(size):
-            flag &= table[i][j] == player
+            table.append(row.copy())
+
+        return table
+
+    def validate(self, size, x, y):
+        if x < 0 or x > size - 1:
+            print('Error: invalid row number')
+            return False
+
+        if y < 0 or y > size - 1:
+            print('Error: invalid column number')
+            return False
+
+        return True
+
+    def flip_player(self):
+        if self.player == 'X':
+            self.player = 'O'
+        else:
+            self.player = 'X'
+
+    def turn(self, table, x, y):
+        if not self.validate(len(table), x, y):
+            return False
+
+        if table[x][y] != ' ':
+            print('Error: field is not empty')
+            return False
+
+        table[x][y] = self.player
+
+        return True
+
+    def check_hv(self, table, player):
+        size = len(table)
+        for i in range(size):
+            flag = True
+            for j in range(size):
+                flag &= table[i][j] == player
+                if not flag:
+                    break
+            if flag:
+                return True
+
+            flag = True
+            for j in range(size):
+                flag &= table[j][i] == player
+                if not flag:
+                    break
+            if flag:
+                return True
+
+        return False
+
+    def check_d(self, table, player):
+        size = len(table)
+        flag = True
+        for i in range(size):
+            flag &= table[i][i] == player
             if not flag:
                 break
         if flag:
             return True
 
         flag = True
-        for j in range(size):
-            flag &= table[j][i] == player
+        for i in range(size):
+            flag &= table[i][size - 1 - i] == player
             if not flag:
                 break
         if flag:
             return True
 
-    return False
+        return False
+
+    def check(self, table, player, turn_count):
+        if self.check_hv(table, player) or self.check_d(table, player):
+            return player
+
+        if turn_count == len(table)**2:
+            return 'XO'
+
+        return 'cont'
 
 
-def check_d(table, player):
-    size = len(table)
-    flag = True
-    for i in range(size):
-        flag &= table[i][i] == player
-        if not flag:
-            break
-    if flag:
-        return True
+class App:
 
-    flag = True
-    for i in range(size):
-        flag &= table[i][size - 1 - i] == player
-        if not flag:
-            break
-    if flag:
-        return True
+    def __init__(self):
+        self.init_window()
 
-    return False
+    def init_window(self):
+        window = tk.Tk()
+        window.title('tictactoe')
+        window.attributes('-type', 'dialog')
 
+        scale = tk.Scale(master=window, from_=3, to=10, orient=tk.HORIZONTAL)
+        scale.pack()
+        button = tk.Button(master=window, text="Start")
+        button['command'] = lambda window=window, scale=scale, button=button: (
+            self.init_game(window, scale, button)
+        )
+        button.pack()
 
-def check(table, player, turn_count):
-    if check_hv(table, player) or check_d(table, player):
-        return player
+        window.mainloop()
 
-    if turn_count == len(table)**2:
-        return 'XO'
+    def init_game(self, window, scale, button):
+        size = scale.get()
+        scale.destroy()
+        button.destroy()
 
-    return 'cont'
+        self.game = Game(size)
 
+        for i in range(size):
+            window.columnconfigure(i, weight=1, minsize=50)
+            window.rowconfigure(i, weight=1, minsize=50)
 
-def on_clicked(button, x, y):
-    print(f'on_clicked: x={x} y={y}')
-    global table
-    global state
-    global turn_count
+            for j in range(size):
+                button = tk.Button(master=window, text=" ")
+                button['command'] = lambda button=button, i=i, j=j: (
+                    self.on_clicked(button, i, j)
+                )
+                button.grid(row=i, column=j, sticky='nswe')
 
-    if state != 'cont':
-        return
+    def on_clicked(self, button, x, y):
+        print(f'on_clicked: x={x} y={y}')
 
-    if turn(table, x, y):
-        button['text'] = player
-        turn_count += 1
-        state = check(table, player, turn_count)
-        flip_player()
-#        display(size)
+        if self.game.state != 'cont':
+            return
 
-    if state == 'XO':
-        print('Nobody win :(')
-        messagebox.showinfo('The End', 'Nobody win :(')
-        os._exit(0)
-    elif state != 'cont':
-        print(f'Player {state} win!')
-        messagebox.showinfo('The End', f'Player {state} win!')
-        os._exit(0)
-
-
-def init_game(window, scale, button):
-    size = scale.get()
-    scale.destroy()
-    button.destroy()
-
-    global table
-    table = init_table(size)
-
-    for i in range(size):
-        window.columnconfigure(i, weight=1, minsize=50)
-        window.rowconfigure(i, weight=1, minsize=50)
-
-        for j in range(size):
-            button = tk.Button(master=window, text=" ")
-            button['command'] = lambda button=button, i=i, j=j: (
-                on_clicked(button, i, j)
+        if self.game.turn(self.game.table, x, y):
+            button['text'] = self.game.player
+            self.game.turn_count += 1
+            state = self.game.check(
+                self.game.table,
+                self.game.player,
+                self.game.turn_count
             )
-            button.grid(row=i, column=j, sticky='nswe')
+            self.game.flip_player()
 
-
-def init_window():
-    window = tk.Tk()
-    window.title('tictactoe')
-    window.attributes('-type', 'dialog')
-
-    scale = tk.Scale(master=window, from_=3, to=10, orient=tk.HORIZONTAL)
-    scale.pack()
-    button = tk.Button(master=window, text="Start")
-    button['command'] = lambda window=window, scale=scale, button=button: (
-        init_game(window, scale, button)
-    )
-    button.pack()
-
-    window.mainloop()
+        if state == 'XO':
+            print('Nobody win :(')
+            messagebox.showinfo('The End', 'Nobody win :(')
+            os._exit(0)
+        elif state != 'cont':
+            print(f'Player {state} win!')
+            messagebox.showinfo('The End', f'Player {state} win!')
+            os._exit(0)
 
 
 if __name__ == '__main__':
-    init_window()
+    app = App()
 
 #    size = int(input('size of table = '))
 #    table = init_table(size)
