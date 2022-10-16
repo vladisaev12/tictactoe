@@ -2,9 +2,15 @@
 
 import os
 import sys
+import tkinter as tk
+from tkinter import messagebox
+# import threading
 
 
+table = []
 player = 'X'
+turn_count = 0
+state = 'cont'
 
 
 def init_table(size):
@@ -119,26 +125,90 @@ def check(table, player, turn_count):
     return 'cont'
 
 
-if __name__ == '__main__':
-    size = int(input('size of table = '))
-    table = init_table(size)
-    display(size)
+def on_clicked(button, x, y):
+    print(f'on_clicked: x={x} y={y}')
+    global table
+    global state
+    global turn_count
 
-    turn_count = 0
-    state = 'cont'
-    while state == 'cont':
-        print(f'Player {player}:')
-        x = int(input('row = '))
-        y = int(input('col = '))
-        if turn(table, x - 1, y - 1):
-            turn_count += 1
-            state = check(table, player, turn_count)
-            flip_player()
-        display(size)
+    if state != 'cont':
+        return
+
+    if turn(table, x, y):
+        button['text'] = player
+        turn_count += 1
+        state = check(table, player, turn_count)
+        flip_player()
+#        display(size)
 
     if state == 'XO':
         print('Nobody win :(')
-    else:
+        messagebox.showinfo('The End', 'Nobody win :(')
+        os._exit(0)
+    elif state != 'cont':
         print(f'Player {state} win!')
+        messagebox.showinfo('The End', f'Player {state} win!')
+        os._exit(0)
 
+
+def init_game(window, scale, button):
+    size = scale.get()
+    scale.destroy()
+    button.destroy()
+
+    global table
+    table = init_table(size)
+
+    for i in range(size):
+        window.columnconfigure(i, weight=1, minsize=50)
+        window.rowconfigure(i, weight=1, minsize=50)
+
+        for j in range(size):
+            button = tk.Button(master=window, text=" ")
+            button['command'] = lambda button=button, i=i, j=j: (
+                on_clicked(button, i, j)
+            )
+            button.grid(row=i, column=j, sticky='nswe')
+
+
+def init_window():
+    window = tk.Tk()
+    window.title('tictactoe')
+    window.attributes('-type', 'dialog')
+
+    scale = tk.Scale(master=window, from_=3, to=10, orient=tk.HORIZONTAL)
+    scale.pack()
+    button = tk.Button(master=window, text="Start")
+    button['command'] = lambda window=window, scale=scale, button=button: (
+        init_game(window, scale, button)
+    )
+    button.pack()
+
+    window.mainloop()
+
+
+if __name__ == '__main__':
+    init_window()
+
+#    size = int(input('size of table = '))
+#    table = init_table(size)
+#    display(size)
+#    init_window(size)
+#    thr = threading.Thread(target=init_window,args=[size],daemon=True)
+#    thr.start()
+#    while state == 'cont':
+#        print(f'Player {player}:')
+#        x = int(input('row = '))
+#        y = int(input('col = '))
+#        if turn(table, x - 1, y - 1):
+#            turn_count += 1
+#            state = check(table, player, turn_count)
+#            flip_player()
+#        display(size)
+#
+#    if state == 'XO':
+#        print('Nobody win :(')
+#    else:
+#        print(f'Player {state} win!')
+#
     os._exit(0)
